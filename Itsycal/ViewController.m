@@ -453,7 +453,7 @@
 
         if (useOutlineIcon) {
             // Turning off smoothing looks better (why??).
-            CGContextSetShouldSmoothFonts(ctx, false);
+            CGContextSetShouldSmoothFonts(ctx, true);
 
             // Draw text.
             NSMutableParagraphStyle *pstyle = [NSMutableParagraphStyle new];
