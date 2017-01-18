@@ -9,10 +9,10 @@
 #import "ItsycalWindow.h"
 
 static const CGFloat kMinimumSpaceBetweenWindowAndScreenEdge = 10;
-static const CGFloat kArrowHeight  = 8;
-static const CGFloat kCornerRadius = 8;
+static const CGFloat kArrowHeight  = -2;
+static const CGFloat kCornerRadius = 2;
 static const CGFloat kBorderWidth  = 1;
-static const CGFloat kShadowWidth  = 12;
+static const CGFloat kShadowWidth  = 6;
 static const CGFloat kWindowTopMargin    = kCornerRadius + kBorderWidth + kArrowHeight;
 static const CGFloat kWindowSideMargin   = kBorderWidth  + kShadowWidth;
 static const CGFloat kWindowBottomMargin = kCornerRadius + kBorderWidth + kShadowWidth + kShadowWidth/2;

@@ -24,7 +24,6 @@ NSString * const kWeekendIsSaturdaySunday = @"WeekendIsSaturdaySunday";
 // are set. See -weekendIsFridaySaturday.
 NSString * const kWeekendIsFridaySaturday = @"WeekendIsFridaySaturday";
 
-static NSShadow *kShadow=nil;
 static NSColor *kBackgroundColor=nil, *kWeeksBackgroundColor=nil, *kDatesBackgroundColor=nil, *kBorderColor=nil, *kOutlineColor=nil, *kLightTextColor=nil, *kDarkTextColor=nil, *kWeekendTextColor=nil;
 static NSArray *kCountriesWithFridaySaturdayWeekend=nil;
 
@@ -50,12 +49,8 @@ static NSArray *kCountriesWithFridaySaturdayWeekend=nil;
 
 + (void)initialize
 {
-    kShadow = [NSShadow new];
-    kShadow.shadowColor = [NSColor colorWithWhite:0 alpha:0.3];
-    kShadow.shadowBlurRadius = 2;
-    kShadow.shadowOffset = NSMakeSize(0, -1);
     kBorderColor = [NSColor colorWithRed:0.86 green:0.86 blue:0.88 alpha:1];
-    kOutlineColor = [NSColor colorWithRed:0.7 green:0.7 blue:0.73 alpha:1];
+    kOutlineColor = [NSColor colorWithRed:0.9 green:0.9 blue:0.9 alpha:1];
     kLightTextColor = [NSColor colorWithWhite:0.15 alpha:0.6];
     kDarkTextColor  = [NSColor colorWithWhite:0.15 alpha:1];
     kWeekendTextColor = [NSColor colorWithRed:0.75 green:0.2 blue:0.1 alpha:1];
@@ -143,7 +138,7 @@ static NSArray *kCountriesWithFridaySaturdayWeekend=nil;
     vcon(@"H:|-8-[_monthLabel]-4-[_btnPrev]-2-[_btnToday]-2-[_btnNext]-6-|", NSLayoutFormatAlignAllCenterY);
     vcon(@"H:[_dowGrid]|", 0);
     vcon(@"H:[_weekGrid][_dateGrid]|", 0);
-    vcon(@"V:|-(-3)-[_monthLabel]-1-[_dowGrid][_dateGrid]-1-|", 0);
+    vcon(@"V:|-(-3)-[_monthLabel]-6-[_dowGrid][_dateGrid]-1-|", 0);
     vcon(@"V:[_weekGrid]-1-|", 0);
     
     _weeksConstraint = [NSLayoutConstraint constraintWithItem:_weekGrid attribute:NSLayoutAttributeRight relatedBy:NSLayoutRelationEqual toItem:self attribute:NSLayoutAttributeLeft multiplier:1 constant:0];
@@ -400,7 +395,7 @@ static NSArray *kCountriesWithFridaySaturdayWeekend=nil;
         }
     }
     if (startCell && endCell) {
-        _highlightPath = [self bezierPathWithStartCell:startCell endCell:endCell radius:2 inset:2.5 useRects:YES];
+        _highlightPath = [self bezierPathWithStartCell:startCell endCell:endCell radius:0 inset:2.5 useRects:YES];
         _highlightColor = color;
         // Normalize location of _highlightPath. We will tranlsate it
         // again in drawRect to the correct location.
@@ -621,7 +616,7 @@ static NSArray *kCountriesWithFridaySaturdayWeekend=nil;
     [kDatesBackgroundColor set];
     NSRectFillUsingOperation(_dateGrid.frame, NSCompositingOperationSourceOver);
     
-    NSBezierPath *outlinePath = [self bezierPathWithStartCell:_monthStartCell endCell:_monthEndCell radius:4 inset:0 useRects:NO];
+    NSBezierPath *outlinePath = [self bezierPathWithStartCell:_monthStartCell endCell:_monthEndCell radius:0 inset:0 useRects:NO];
     
     [kOutlineColor set];
     [outlinePath setLineWidth:2];
@@ -629,7 +624,6 @@ static NSArray *kCountriesWithFridaySaturdayWeekend=nil;
     
     [[NSColor whiteColor] set];
     [NSGraphicsContext saveGraphicsState];
-    [kShadow set];
     [outlinePath fill];
     [NSGraphicsContext restoreGraphicsState];
     

@@ -177,7 +177,7 @@ static NSString *kEventCellIdentifier = @"EventCell";
     static AgendaEventCell *cell = nil;
     if (cell == nil) { cell = [AgendaEventCell new]; }
     
-    CGFloat height = 18; // AgendaDateCell height;
+    CGFloat height = 26; // AgendaDateCell height;
     id obj = self.events[row];
     if ([obj isKindOfClass:[EventInfo class]]) {
         cell.frame = NSMakeRect(0, 0, NSWidth(_tv.frame), 999); // only width is important here
@@ -310,7 +310,7 @@ static NSString *kEventCellIdentifier = @"EventCell";
         self.identifier = kDateCellIdentifier;
         _textField = [NSTextField new];
         _textField.translatesAutoresizingMaskIntoConstraints = NO;
-        _textField.font = OSVersionIsAtLeast(10, 11, 0) ? [NSFont systemFontOfSize:11 weight:NSFontWeightSemibold] : [NSFont fontWithName:@"Lucida Grande Bold" size:11];
+        _textField.font = OSVersionIsAtLeast(10, 11, 0) ? [NSFont systemFontOfSize:12 weight:NSFontWeightSemibold] : [NSFont fontWithName:@"Lucida Grande Bold" size:11];
         _textField.textColor = [NSColor colorWithWhite:0 alpha:0.9];
         _textField.editable = NO;
         _textField.bezeled = NO;
@@ -318,7 +318,7 @@ static NSString *kEventCellIdentifier = @"EventCell";
         _textField.stringValue = @"";
         [self addSubview:_textField];
         [self addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|-4-[_textField]-4-|" options:0 metrics:nil views:@{@"_textField": _textField}]];
-        [self addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|-2-[_textField]" options:0 metrics:nil views:@{@"_textField": _textField}]];
+        [self addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|-4-[_textField]" options:0 metrics:nil views:@{@"_textField": _textField}]];
     }
     return self;
 }
@@ -349,7 +349,7 @@ static NSString *kEventCellIdentifier = @"EventCell";
         self.identifier = kEventCellIdentifier;
         _textField = [NSTextField new];
         _textField.translatesAutoresizingMaskIntoConstraints = NO;
-        _textField.font = OSVersionIsAtLeast(10, 11, 0) ? [NSFont systemFontOfSize:11] : [NSFont fontWithName:@"Lucida Grande" size:11];
+        _textField.font = OSVersionIsAtLeast(10, 11, 0) ? [NSFont systemFontOfSize:12] : [NSFont fontWithName:@"Lucida Grande" size:11];
         _textField.textColor = [NSColor colorWithWhite:0.5 alpha:1];
         _textField.lineBreakMode = NSLineBreakByWordWrapping;
         _textField.editable = NO;
