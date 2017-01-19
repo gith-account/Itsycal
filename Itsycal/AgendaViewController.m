@@ -388,7 +388,7 @@ static NSString *kEventCellIdentifier = @"EventCell";
 {
     // Draw a colored circle with a slightly darker border.
     [[self.eventInfo.event.calendar.color blendedColorWithFraction:0.1 ofColor:[NSColor blackColor]] set];
-    NSRect circleRect = NSMakeRect(4, NSMaxY(self.frame)-14, 8, 8);
+    NSRect circleRect = NSMakeRect(4, NSMaxY(self.frame)-16, 8, 8);
     [[NSBezierPath bezierPathWithOvalInRect:circleRect] fill];
     [[self.eventInfo.event.calendar.color blendedColorWithFraction:0.5 ofColor:[NSColor whiteColor]] set];
     circleRect = NSInsetRect(circleRect, 1, 1);
