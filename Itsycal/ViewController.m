@@ -64,12 +64,20 @@
     
     // Convenience function to config buttons.
     MoButton* (^btn)(NSString*, NSString*, NSString*, SEL) = ^MoButton* (NSString *imageName, NSString *tip, NSString *key, SEL action) {
+        NSColor * tint = [NSColor colorWithRed:0.5 green:0.5 blue:0.5 alpha:1];
+        NSImage * image = [NSImage imageNamed:imageName];
+        [image lockFocus];
+        [tint set];
+        NSRect imageRect = {NSZeroPoint, [image size]};
+        NSRectFillUsingOperation(imageRect, NSCompositingOperationSourceAtop);
+        [image unlockFocus];
+        
         MoButton *btn = [MoButton new];
         [btn setButtonType:NSMomentaryChangeButton];
         [btn setTarget:self];
         [btn setAction:action];
         [btn setToolTip:tip];
-        [btn setImage:[NSImage imageNamed:imageName]];
+        [btn setImage:image];
         [btn setKeyEquivalent:key];
         [btn setKeyEquivalentModifierMask:NSEventModifierFlagCommand];
         [v addSubview:btn];

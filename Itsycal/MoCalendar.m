@@ -101,6 +101,14 @@ static NSArray *kCountriesWithFridaySaturdayWeekend=nil;
     
     // Convenience function to make buttons.
     MoButton* (^btn)(NSString*, SEL) = ^MoButton* (NSString *imageName, SEL action) {
+        NSColor * tint = [NSColor colorWithRed:0.5 green:0.5 blue:0.5 alpha:1];
+        NSImage * image = [NSImage imageNamed:imageName];
+        [image lockFocus];
+        [tint set];
+        NSRect imageRect = {NSZeroPoint, [image size]};
+        NSRectFillUsingOperation(imageRect, NSCompositingOperationSourceAtop);
+        [image unlockFocus];
+
         MoButton *btn = [MoButton new];
         [btn setButtonType:NSMomentaryChangeButton];
         [btn setBordered:NO];
