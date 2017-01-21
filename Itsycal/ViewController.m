@@ -409,6 +409,8 @@
         if ([[NSUserDefaults standardUserDefaults] boolForKey:kShowDayOfWeekInIcon]) {
             [template appendString:@"EEE"];
         }
+        
+        [template appendFormat:@" h:mm a"];
         [_iconDateFormatter setDateFormat:[NSDateFormatter dateFormatFromTemplate:template options:0 locale:[NSLocale currentLocale]]];
         iconText = [_iconDateFormatter stringFromDate:[NSDate new]];
     } else {
@@ -426,11 +428,11 @@
     NSString *iconText = [self iconText];
     _statusItem.button.image = [self iconImageForText:iconText];
 
-    if (_clockFormat) {
-        [_iconDateFormatter setDateFormat:_clockFormat];
-        _statusItem.button.title = [_iconDateFormatter stringFromDate:[NSDate new]];
+//    if (_clockFormat) {
+//        [_iconDateFormatter setDateFormat:_clockFormat];
+//        _statusItem.button.title = [_iconDateFormatter stringFromDate:[NSDate new]];
         [self updateClock];
-    }
+//    }
 }
 
 - (NSImage *)iconImageForText:(NSString *)text
@@ -452,7 +454,7 @@
     CGRect textRect = [[[NSAttributedString alloc] initWithString:text attributes:@{NSFontAttributeName: font}] boundingRectWithSize:CGSizeMake(999, 999) options:0 context:nil];
 
     // Icon width is at least 19 pts with 3 pt outside margins, 4 pt inside margins.
-    CGFloat width = MAX(4 + ceilf(NSWidth(textRect)) + 4, 19);
+    CGFloat width = MAX(4 + ceilf(NSWidth(textRect)) + 4 + 7, 19);
     CGFloat height = 16;
     iconImage = [NSImage imageWithSize:NSMakeSize(width, height) flipped:NO drawingHandler:^BOOL (NSRect rect) {
 
