@@ -1,5 +1,5 @@
 This is a fork of [sfsam/itsycal](https://github.com/sfsam/Itsycal) very cool open source
-calendar.  This fork just add some UI tweaks to make the UI more modern.
+calendar.  This fork just adds some UI tweaks to make the UI more modern.
 
 ![Screen](./Screenshot.png)
 
