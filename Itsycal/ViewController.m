@@ -31,6 +31,7 @@
     NSDateFormatter       *_iconDateFormatter;
 
     NSString  *_clockFormat;
+    NSString  *_systemClock;
     NSTimer   *_clockTimer;
     BOOL       _clockUsesSeconds;
 }
@@ -43,6 +44,7 @@
     [[NSUserDefaults standardUserDefaults] removeObserver:self forKeyPath:kShowMonthInIcon];
     [[NSUserDefaults standardUserDefaults] removeObserver:self forKeyPath:kShowDayOfWeekInIcon];
     [[NSUserDefaults standardUserDefaults] removeObserver:self forKeyPath:kClockFormat];
+    [[NSUserDefaults standardUserDefaults] removeObserver:self forKeyPath:kSystemClock];
 }
 
 #pragma mark -
@@ -361,13 +363,24 @@
     _statusItem.button.action = @selector(statusItemClicked:);
     _statusItem.highlightMode = NO; // Deprecated in 10.10, but what is alternative?
 
-    // Use monospaced font in case user sets custom clock format.
-    // We modify the default font with a font descriptor instead
-    // of using +monospacedDigitSystemFontOfSize:weight: because
-    // we get slightly darker looking ':' characters this way.
-    NSFontDescriptor *fontDesc = [_statusItem.button.font fontDescriptor];
-    fontDesc = [fontDesc fontDescriptorByAddingAttributes:@{NSFontFeatureSettingsAttribute: @[@{NSFontFeatureTypeIdentifierKey: @(kNumberSpacingType), NSFontFeatureSelectorIdentifierKey: @(kMonospacedNumbersSelector)}]}];
-    _statusItem.button.font = [NSFont fontWithDescriptor:fontDesc size:0];
+    NSString *systemclock = [[NSUserDefaults standardUserDefaults] stringForKey:kSystemClock];
+
+    // Did the user choose to mimic the system clock?
+    if (systemclock != nil && ![systemclock isEqualToString:@""] && ![systemclock isEqualToString:@"false"]) {
+        // Use regular system font
+        
+        _statusItem.button.font = [NSFont systemFontOfSize:14.0];
+    }
+    else {
+        // Use monospaced font in case user sets custom clock format.
+        // We modify the default font with a font descriptor instead
+        // of using +monospacedDigitSystemFontOfSize:weight: because
+        // we get slightly darker looking ':' characters this way.
+
+        NSFontDescriptor *fontDesc = [_statusItem.button.font fontDescriptor];
+        fontDesc = [fontDesc fontDescriptorByAddingAttributes:@{NSFontFeatureSettingsAttribute: @[@{NSFontFeatureTypeIdentifierKey: @(kNumberSpacingType), NSFontFeatureSelectorIdentifierKey: @(kMonospacedNumbersSelector)}]}];
+        _statusItem.button.font = [NSFont fontWithDescriptor:fontDesc size:0];
+    }
 
     // Remember item position in menubar for 10.12+. (@pskowronek (Github))
     if (OSVersionIsAtLeast(10, 12, 0)) {
@@ -410,8 +423,19 @@
             [template appendString:@"EEE"];
         }
         
-        [template appendFormat:@" h:mm a"];
-        [_iconDateFormatter setDateFormat:[NSDateFormatter dateFormatFromTemplate:template options:0 locale:[NSLocale currentLocale]]];
+        // Did the user choose to mimic the system clock?
+        NSString *systemclock = [[NSUserDefaults standardUserDefaults] stringForKey:kSystemClock];
+
+        if (systemclock != nil && ![systemclock isEqualToString:@""] && ![systemclock isEqualToString:@"false"]) {
+            NSLog(@"Mimic system clock: [%@]", systemclock);
+            [_iconDateFormatter setDateFormat:@"EEE d MMM"];
+        }
+        
+        // If the user did not choose to mimic the system clock, continue with regular style
+        else {
+            NSLog(@"Use icon");
+            [_iconDateFormatter setDateFormat:[NSDateFormatter dateFormatFromTemplate:template options:0 locale:[NSLocale currentLocale]]];
+        }
         iconText = [_iconDateFormatter stringFromDate:[NSDate new]];
     } else {
         iconText = [NSString stringWithFormat:@"%zd", _moCal.todayDate.day];
@@ -428,11 +452,11 @@
     NSString *iconText = [self iconText];
     _statusItem.button.image = [self iconImageForText:iconText];
 
-//    if (_clockFormat) {
-//        [_iconDateFormatter setDateFormat:_clockFormat];
-//        _statusItem.button.title = [_iconDateFormatter stringFromDate:[NSDate new]];
+    if (_clockFormat) {
+        [_iconDateFormatter setDateFormat:_clockFormat];
+        _statusItem.button.title = [_iconDateFormatter stringFromDate:[NSDate new]];
         [self updateClock];
-//    }
+    }
 }
 
 - (NSImage *)iconImageForText:(NSString *)text
@@ -460,16 +484,34 @@
 
         // Get image's context.
         CGContextRef const ctx = [[NSGraphicsContext currentContext] graphicsPort];
+        
+        // Did the user choose to mimic the system clock?
 
-        if (useOutlineIcon) {
+        NSString *systemclock = [[NSUserDefaults standardUserDefaults] stringForKey:kSystemClock];
+        
+        if (systemclock != nil && ![systemclock isEqualToString:@""] && ![systemclock isEqualToString:@"false"]) {
+            
             // Turning off smoothing looks better (why??).
-            CGContextSetShouldSmoothFonts(ctx, true);
-
+            CGContextSetShouldSmoothFonts(ctx, false);
+            
             // Draw text.
             NSMutableParagraphStyle *pstyle = [NSMutableParagraphStyle new];
             pstyle.alignment = NSTextAlignmentCenter;
-            [text drawInRect:NSOffsetRect(rect, 0, 1.5) withAttributes:@{NSFontAttributeName: [NSFont monospacedDigitSystemFontOfSize:13.5 weight:NSFontWeightMedium], NSParagraphStyleAttributeName: pstyle, NSForegroundColorAttributeName: [NSColor blackColor]}];
+            [text drawInRect:NSOffsetRect(rect, 0, 2.0) withAttributes:@{NSFontAttributeName: [NSFont systemFontOfSize:14.0 weight:NSFontWeightMedium], NSParagraphStyleAttributeName: pstyle, NSForegroundColorAttributeName: [NSColor blackColor]}];
         }
+        
+        // If the user did not choose to mimic the system clock, continue with the regular options
+        
+        else if (useOutlineIcon) {
+
+                // Turning off smoothing looks better (why??).
+                CGContextSetShouldSmoothFonts(ctx, true);
+
+                // Draw text.
+                NSMutableParagraphStyle *pstyle = [NSMutableParagraphStyle new];
+                pstyle.alignment = NSTextAlignmentCenter;
+                [text drawInRect:NSOffsetRect(rect, 0, 1.5) withAttributes:@{NSFontAttributeName: [NSFont monospacedDigitSystemFontOfSize:13.5 weight:NSFontWeightMedium], NSParagraphStyleAttributeName: pstyle, NSForegroundColorAttributeName: [NSColor blackColor]}];
+            }
         else {
 
             // Draw solid background icon image.
@@ -878,7 +920,7 @@
     [[[NSWorkspace sharedWorkspace] notificationCenter] addObserver:self selector:@selector(updateMenubarIcon) name:NSWorkspaceDidWakeNotification object:nil];
 
     // Observe NSUserDefaults for preference changes
-    for (NSString *keyPath in @[kShowEventDays, kUseOutlineIcon, kShowMonthInIcon, kShowDayOfWeekInIcon, kClockFormat]) {
+    for (NSString *keyPath in @[kShowEventDays, kUseOutlineIcon, kShowMonthInIcon, kShowDayOfWeekInIcon, kClockFormat, kSystemClock]) {
         [[NSUserDefaults standardUserDefaults] addObserver:self forKeyPath:keyPath options:NSKeyValueObservingOptionNew context:NULL];
     }
 }

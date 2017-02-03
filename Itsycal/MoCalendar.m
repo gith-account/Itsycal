@@ -143,10 +143,10 @@ static NSArray *kCountriesWithFridaySaturdayWeekend=nil;
     void (^vcon)(NSString*, NSLayoutFormatOptions) = ^(NSString *format, NSLayoutFormatOptions opts) {
         [self addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:format options:opts metrics:nil views:NSDictionaryOfVariableBindings(_monthLabel, _btnPrev, _btnToday, _btnNext, _dowGrid, _weekGrid, _dateGrid)]];
     };
-    vcon(@"H:|-8-[_monthLabel]-4-[_btnPrev]-2-[_btnToday]-2-[_btnNext]-6-|", NSLayoutFormatAlignAllCenterY);
+    vcon(@"H:|-16-[_monthLabel]-4-[_btnPrev]-1.5-[_btnToday]-1.5-[_btnNext]-14-|", NSLayoutFormatAlignAllCenterY);
     vcon(@"H:[_dowGrid]|", 0);
     vcon(@"H:[_weekGrid][_dateGrid]|", 0);
-    vcon(@"V:|-(-3)-[_monthLabel]-6-[_dowGrid][_dateGrid]-1-|", 0);
+    vcon(@"V:|-6-[_monthLabel]-6-[_dowGrid][_dateGrid]-1-|", 0);
     vcon(@"V:[_weekGrid]-1-|", 0);
     
     _weeksConstraint = [NSLayoutConstraint constraintWithItem:_weekGrid attribute:NSLayoutAttributeRight relatedBy:NSLayoutRelationEqual toItem:self attribute:NSLayoutAttributeLeft multiplier:1 constant:0];

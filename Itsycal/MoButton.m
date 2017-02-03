@@ -49,7 +49,12 @@
 
 - (void)setAlternateImage:(NSImage *)alternateImage
 {
-    _imgAlt = alternateImage;
+    _imgAlt = [NSImage imageWithSize:alternateImage.size flipped:NO drawingHandler:^BOOL(NSRect dstRect) {
+        [alternateImage drawInRect:dstRect];
+        [[NSColor colorWithRed:0.4 green:0.6 blue:1 alpha:1] set];
+        NSRectFillUsingOperation(dstRect, NSCompositingOperationSourceAtop);
+        return YES;
+    }];
 }
 
 - (void)updateLayer

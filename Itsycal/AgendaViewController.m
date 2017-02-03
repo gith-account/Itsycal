@@ -334,7 +334,7 @@ static NSString *kEventCellIdentifier = @"EventCell";
         _textField.drawsBackground = NO;
         _textField.stringValue = @"";
         [self addSubview:_textField];
-        [self addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|-4-[_textField]-4-|" options:0 metrics:nil views:@{@"_textField": _textField}]];
+        [self addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|-16-[_textField]-4-|" options:0 metrics:nil views:@{@"_textField": _textField}]];
         [self addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|-4-[_textField]" options:0 metrics:nil views:@{@"_textField": _textField}]];
     }
     return self;
