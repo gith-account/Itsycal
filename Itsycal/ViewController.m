@@ -427,13 +427,11 @@
         NSString *systemclock = [[NSUserDefaults standardUserDefaults] stringForKey:kSystemClock];
 
         if (systemclock != nil && ![systemclock isEqualToString:@""] && ![systemclock isEqualToString:@"false"]) {
-            NSLog(@"Mimic system clock: [%@]", systemclock);
             [_iconDateFormatter setDateFormat:@"EEE d MMM"];
         }
         
         // If the user did not choose to mimic the system clock, continue with regular style
         else {
-            NSLog(@"Use icon");
             [_iconDateFormatter setDateFormat:[NSDateFormatter dateFormatFromTemplate:template options:0 locale:[NSLocale currentLocale]]];
         }
         iconText = [_iconDateFormatter stringFromDate:[NSDate new]];
