@@ -2,7 +2,7 @@
 <xliff xmlns="urn:oasis:names:tc:xliff:document:1.2" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="1.2" xsi:schemaLocation="urn:oasis:names:tc:xliff:document:1.2 http://docs.oasis-open.org/xliff/v1.2/os/xliff-core-1.2-strict.xsd">
     <file original="Itsycal/Base.lproj/MainMenu.xib" source-language="en" datatype="plaintext" target-language="de">
         <header>
-            <tool tool-id="com.apple.dt.xcode" tool-name="Xcode" tool-version="8.1" build-num="8B62"></tool>
+            <tool tool-id="com.apple.dt.xcode" tool-name="Xcode" tool-version="8.2.1" build-num="8C1002"></tool>
         </header>
         <body>
             <trans-unit id="1Xt-HY-uBw.title">
@@ -77,14 +77,14 @@
     </file>
     <file original="Itsycal/Info.plist" source-language="en" datatype="plaintext" target-language="de">
         <header>
-            <tool tool-id="com.apple.dt.xcode" tool-name="Xcode" tool-version="8.1" build-num="8B62"></tool>
+            <tool tool-id="com.apple.dt.xcode" tool-name="Xcode" tool-version="8.2.1" build-num="8C1002"></tool>
         </header>
         <body>
             <trans-unit id="CFBundleName">
                 <source>$(PRODUCT_NAME)</source>
             </trans-unit>
             <trans-unit id="CFBundleShortVersionString">
-                <source>0.10.16</source>
+                <source>0.11.0</source>
             </trans-unit>
             <trans-unit id="NSHumanReadableCopyright">
                 <source>Copyright © 2015 mowglii.com</source>
@@ -93,7 +93,7 @@
     </file>
     <file original="Itsycal/Localizable.strings" source-language="en" datatype="plaintext" target-language="de">
         <header>
-            <tool tool-id="com.apple.dt.xcode" tool-name="Xcode" tool-version="8.1" build-num="8B62"></tool>
+            <tool tool-id="com.apple.dt.xcode" tool-name="Xcode" tool-version="8.2.1" build-num="8C1002"></tool>
         </header>
         <body>
             <trans-unit id="1 day">
@@ -171,6 +171,11 @@
                 <target>30 Minuten vorher</target>
                 <note>No comment provided by engineer.</note>
             </trans-unit>
+            <trans-unit id="About">
+                <source>About</source>
+                <target>Über Itsycal</target>
+                <note>About prefs tab label</note>
+            </trans-unit>
             <trans-unit id="Add Location">
                 <source>Add Location</source>
                 <target>Ort hinzufügen</target>
@@ -186,6 +191,11 @@
                 <target>Ganztägig:</target>
                 <note>No comment provided by engineer.</note>
             </trans-unit>
+            <trans-unit id="Appearance">
+                <source>Appearance</source>
+                <target>Ersheinung</target>
+                <note>Appearance prefs tab label</note>
+            </trans-unit>
             <trans-unit id="Are you sure you want to delete this event?">
                 <source>Are you sure you want to delete this event?</source>
                 <target>Sind Sie sicher, dass Sie dieses Ereignis entfernen möchten ?</target>
@@ -194,6 +204,11 @@
             <trans-unit id="At time of event">
                 <source>At time of event</source>
                 <target>Bei Ereignisstart</target>
+                <note>No comment provided by engineer.</note>
+            </trans-unit>
+            <trans-unit id="Automatically check for updates">
+                <source>Automatically check for updates</source>
+                <target>Automatisch nach Aktualisierung suchen</target>
                 <note>No comment provided by engineer.</note>
             </trans-unit>
             <trans-unit id="Calendar access denied.\n\nItsycal is more useful when it can display events from your calendars. You can change this setting in System Preferences › Security &amp; Privacy › Privacy">
@@ -215,10 +230,15 @@ Itsycal ist nützlich, wenn es Ereignisse aus Ihrem Kalender angezeigt werden k�
                 <target>Abbrechen</target>
                 <note>No comment provided by engineer.</note>
             </trans-unit>
-            <trans-unit id="Check for updates...">
-                <source>Check for updates...</source>
+            <trans-unit id="Check for Updates...">
+                <source>Check for Updates...</source>
                 <target>Nach Updates suchen…</target>
                 <note>No comment provided by engineer.</note>
+            </trans-unit>
+            <trans-unit id="Datetime pattern">
+                <source>Datetime pattern</source>
+                <note>No comment provided by engineer.</note>
+                <target>Datum &amp; Zeit Muster</target>
             </trans-unit>
             <trans-unit id="Delete All Future Events">
                 <source>Delete All Future Events</source>
@@ -280,15 +300,25 @@ Itsycal ist nützlich, wenn es Ereignisse aus Ihrem Kalender angezeigt werden k�
                 <target>Jährlich</target>
                 <note>No comment provided by engineer.</note>
             </trans-unit>
-            <trans-unit id="First day of week">
-                <source>First day of week</source>
-                <target>Erster Wochentag</target>
+            <trans-unit id="First day of week:">
+                <source>First day of week:</source>
+                <target>Erster Wochentag:</target>
                 <note>No comment provided by engineer.</note>
             </trans-unit>
             <trans-unit id="Friday">
                 <source>Friday</source>
                 <target>Freitag</target>
                 <note>No comment provided by engineer.</note>
+            </trans-unit>
+            <trans-unit id="General">
+                <source>General</source>
+                <target>Allgemein</target>
+                <note>General prefs tab label</note>
+            </trans-unit>
+            <trans-unit id="Hide icon">
+                <source>Hide icon</source>
+                <note>No comment provided by engineer.</note>
+                <target>Menüleistensymbol verbergen</target>
             </trans-unit>
             <trans-unit id="Highlight weekend">
                 <source>Highlight weekend</source>
@@ -442,8 +472,8 @@ Bitte beenden Sie Itsycal, es in den Programme-Ordner zu verschieben, und erneut
             </trans-unit>
             <trans-unit id="Use outline icon">
                 <source>Use outline icon</source>
-                <note>No comment provided by engineer.</note>
                 <target>Verwende skizzierte menüleistensymbol</target>
+                <note>No comment provided by engineer.</note>
             </trans-unit>
             <trans-unit id="Wednesday">
                 <source>Wednesday</source>

@@ -187,6 +187,7 @@ static NSString *kEventCellIdentifier = @"EventCell";
     if (cell == nil) { cell = [AgendaEventCell new]; }
     
     CGFloat height = 26; // AgendaDateCell height;
+
     id obj = self.events[row];
     if ([obj isKindOfClass:[EventInfo class]]) {
         cell.frame = NSMakeRect(0, 0, NSWidth(_tv.frame), 999); // only width is important here
@@ -327,7 +328,7 @@ static NSString *kEventCellIdentifier = @"EventCell";
         self.identifier = kDateCellIdentifier;
         _textField = [NSTextField new];
         _textField.translatesAutoresizingMaskIntoConstraints = NO;
-        _textField.font = OSVersionIsAtLeast(10, 11, 0) ? [NSFont systemFontOfSize:12 weight:NSFontWeightSemibold] : [NSFont fontWithName:@"Lucida Grande Bold" size:11];
+        _textField.font = [NSFont systemFontOfSize:12 weight:NSFontWeightSemibold];
         _textField.textColor = [NSColor colorWithWhite:0 alpha:0.9];
         _textField.editable = NO;
         _textField.bezeled = NO;
@@ -343,11 +344,11 @@ static NSString *kEventCellIdentifier = @"EventCell";
 - (void)drawRect:(NSRect)dirtyRect
 {
     NSRect r = self.bounds;
-    [[NSColor colorWithRed:0.86 green:0.86 blue:0.88 alpha:1] set];
+    [[NSColor colorWithWhite:0.86 alpha:1] set];
     NSRectFillUsingOperation(r, NSCompositingOperationSourceOver);
 
     r.size.height -= 1;
-    [[NSColor colorWithRed:0.95 green:0.95 blue:0.96 alpha:1] set];
+    [[NSColor colorWithWhite:0.95 alpha:1] set];
     NSRectFillUsingOperation(r, NSCompositingOperationSourceOver);
 }
 
@@ -366,7 +367,7 @@ static NSString *kEventCellIdentifier = @"EventCell";
         self.identifier = kEventCellIdentifier;
         _textField = [NSTextField new];
         _textField.translatesAutoresizingMaskIntoConstraints = NO;
-        _textField.font = OSVersionIsAtLeast(10, 11, 0) ? [NSFont systemFontOfSize:12] : [NSFont fontWithName:@"Lucida Grande" size:11];
+        _textField.font = [NSFont systemFontOfSize:12];
         _textField.textColor = [NSColor colorWithWhite:0.5 alpha:1];
         _textField.lineBreakMode = NSLineBreakByWordWrapping;
         _textField.editable = NO;
