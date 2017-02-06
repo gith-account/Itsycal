@@ -11,9 +11,13 @@
 #import "ItsycalWindow.h"
 #import "SBCalendar.h"
 #import "EventViewController.h"
-#import "PrefsViewController.h"
+#import "PrefsVC.h"
+#import "PrefsGeneralVC.h"
+#import "PrefsAppearanceVC.h"
+#import "PrefsAboutVC.h"
 #import "TooltipViewController.h"
 #import "MoButton.h"
+#import "MoVFLHelper.h"
 #import "Sparkle/SUUpdater.h"
 
 @implementation ViewController
@@ -31,7 +35,6 @@
     NSDateFormatter       *_iconDateFormatter;
 
     NSString  *_clockFormat;
-    NSString  *_systemClock;
     NSTimer   *_clockTimer;
     BOOL       _clockUsesSeconds;
 }
@@ -44,7 +47,6 @@
     [[NSUserDefaults standardUserDefaults] removeObserver:self forKeyPath:kShowMonthInIcon];
     [[NSUserDefaults standardUserDefaults] removeObserver:self forKeyPath:kShowDayOfWeekInIcon];
     [[NSUserDefaults standardUserDefaults] removeObserver:self forKeyPath:kClockFormat];
-    [[NSUserDefaults standardUserDefaults] removeObserver:self forKeyPath:kSystemClock];
 }
 
 #pragma mark -
@@ -66,6 +68,7 @@
     
     // Convenience function to config buttons.
     MoButton* (^btn)(NSString*, NSString*, NSString*, SEL) = ^MoButton* (NSString *imageName, NSString *tip, NSString *key, SEL action) {
+
         NSColor * tint = [NSColor colorWithRed:0.5 green:0.5 blue:0.5 alpha:1];
         NSImage * image = [NSImage imageNamed:imageName];
         [image lockFocus];
@@ -73,7 +76,7 @@
         NSRect imageRect = {NSZeroPoint, [image size]};
         NSRectFillUsingOperation(imageRect, NSCompositingOperationSourceAtop);
         [image unlockFocus];
-        
+
         MoButton *btn = [MoButton new];
         [btn setButtonType:NSMomentaryChangeButton];
         [btn setTarget:self];
@@ -100,16 +103,14 @@
     _agendaVC.delegate = self;
     NSView *agenda = _agendaVC.view;
     [v addSubview:agenda];
-    
-    // Convenience function to make visual constraints.
-    void (^vcon)(NSString*, NSLayoutFormatOptions) = ^(NSString *format, NSLayoutFormatOptions opts) {
-        [v addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:format options:opts metrics:nil views:NSDictionaryOfVariableBindings(_moCal, _btnAdd, _btnCal, _btnOpt, _btnPin, agenda)]];
-    };
-    vcon(@"H:|[_moCal]|", 0);
-    vcon(@"H:|[agenda]|", 0);
-    vcon(@"H:|-6-[_btnAdd]-(>=0)-[_btnPin]-10-[_btnCal]-10-[_btnOpt]-6-|", NSLayoutFormatAlignAllCenterY);
-    vcon(@"V:|[_moCal]-6-[_btnOpt]", 0);
-    vcon(@"V:[agenda]-(-2)-|", 0);
+
+    // Constraints
+    MoVFLHelper *vfl = [[MoVFLHelper alloc] initWithSuperview:v metrics:nil views:NSDictionaryOfVariableBindings(_moCal, _btnAdd, _btnCal, _btnOpt, _btnPin, agenda)];
+    [vfl :@"H:|[_moCal]|"];
+    [vfl :@"H:|[agenda]|"];
+    [vfl :@"H:|-6-[_btnAdd]-(>=0)-[_btnPin]-10-[_btnCal]-10-[_btnOpt]-6-|" :NSLayoutFormatAlignAllCenterY];
+    [vfl :@"V:|[_moCal]-6-[_btnOpt]"];
+    [vfl :@"V:[agenda]-(-2)-|"];
     
     // Margin between bottom of _moCal and top of agenda. When the agenda
     // has no items, we reduce this space so that the bottom of the window
@@ -146,6 +147,23 @@
     // Now that everything else is set up, we file for notifications.
     // Some of the notification handlers rely on stuff we just set up.
     [self fileNotifications];
+
+    [_moCal bind:@"showWeeks" toObject:[NSUserDefaultsController sharedUserDefaultsController] withKeyPath:[@"values." stringByAppendingString:kShowWeeks] options:@{NSContinuouslyUpdatesValueBindingOption: @(YES)}];
+    [_moCal bind:@"highlightedDOWs" toObject:[NSUserDefaultsController sharedUserDefaultsController] withKeyPath:[@"values." stringByAppendingString:kHighlightedDOWs] options:@{NSContinuouslyUpdatesValueBindingOption: @(YES)}];
+    [_moCal bind:@"weekStartDOW" toObject:[NSUserDefaultsController sharedUserDefaultsController] withKeyPath:[@"values." stringByAppendingString:kWeekStartDOW] options:@{NSContinuouslyUpdatesValueBindingOption: @(YES)}];
+
+    // A very ugly and questionable hack. Maybe it doesn't work. It
+    // shouldn't work. But I think it might. Somehow prevents(?!?)
+    // defaults from temporarily changing to NULL and then reverting
+    // back after the first access. The bug seems random and hard to
+    // replicate so I don't know if (or why) this works. The idea is
+    // a bogus first access will prevent the bug from happening when
+    // the user changes defaults the first time.
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    [defaults setBool:YES forKey:@"WakeUpUserDefaults"];
+    [defaults synchronize];
+    [defaults removeObjectForKey:@"WakeUpUserDefaults"];
+    [defaults synchronize];
 }
 
 - (void)viewWillAppear
@@ -155,9 +173,7 @@
     NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
     _btnPin.state = [defaults boolForKey:kPinItsycal] ? NSOnState : NSOffState;
     _moCal.showWeeks = [defaults boolForKey:kShowWeeks];
-    _moCal.highlightWeekend = [defaults boolForKey:kHighlightWeekend];
-    _moCal.weekStartDOW = [defaults integerForKey:kWeekStartDOW];
-    
+
     [self.itsycalWindow makeFirstResponder:_moCal];
 }
 
@@ -181,7 +197,7 @@
     unichar keyChar = [charsIgnoringModifiers characterAtIndex:0];
     
     if (keyChar == 'w' && noFlags) {
-        [self showWeeks:self];
+        [[NSUserDefaults standardUserDefaults] setBool:!_moCal.showWeeks forKey:kShowWeeks];
     }
     else if (keyChar == ',' && cmdFlag) {
         [self showPrefs:self];
@@ -263,31 +279,10 @@
 {
     NSMenu *optMenu = [[NSMenu alloc] initWithTitle:@"Options Menu"];
     NSInteger i = 0;
-    NSMenuItem *item;
-    item = [optMenu insertItemWithTitle:NSLocalizedString(@"Show calendar weeks", @"") action:@selector(showWeeks:) keyEquivalent:@"w" atIndex:i++];
-    item.state = _moCal.showWeeks ? NSOnState : NSOffState;
-    item.keyEquivalentModifierMask = 0;
 
-    item = [optMenu insertItemWithTitle:NSLocalizedString(@"Highlight weekend", @"") action:@selector(highlightWeekend:) keyEquivalent:@"" atIndex:i++];
-    item.state = _moCal.highlightWeekend ? NSOnState : NSOffState;
-
-    // Week Start submenu
-    NSMenu *weekStartMenu = [[NSMenu alloc] initWithTitle:@"Week Start Menu"];
-    NSInteger i2 = 0;
-    for (NSString *d in @[NSLocalizedString(@"Sunday", @""), NSLocalizedString(@"Monday", @""),
-                          NSLocalizedString(@"Tuesday", @""), NSLocalizedString(@"Wednesday", @""),
-                          NSLocalizedString(@"Thursday", @""), NSLocalizedString(@"Friday", @""),
-                          NSLocalizedString(@"Saturday", @"")]) {
-        [weekStartMenu insertItemWithTitle:d action:@selector(setFirstDayOfWeek:) keyEquivalent:@"" atIndex:i2++];
-    }
-    [[weekStartMenu itemAtIndex:_moCal.weekStartDOW] setState:NSOnState];
-    item = [optMenu insertItemWithTitle:NSLocalizedString(@"First day of week", @"") action:NULL keyEquivalent:@"" atIndex:i++];
-    item.submenu = weekStartMenu;
-    
-    [optMenu insertItem:[NSMenuItem separatorItem] atIndex:i++];
     [optMenu insertItemWithTitle:NSLocalizedString(@"Preferences...", @"") action:@selector(showPrefs:) keyEquivalent:@"," atIndex:i++];
     [optMenu insertItem:[NSMenuItem separatorItem] atIndex:i++];
-    [optMenu insertItemWithTitle:NSLocalizedString(@"Check for updates...", @"") action:@selector(checkForUpdates:) keyEquivalent:@"" atIndex:i++];
+    [optMenu insertItemWithTitle:NSLocalizedString(@"Check for Updates...", @"") action:@selector(checkForUpdates:) keyEquivalent:@"" atIndex:i++];
     [optMenu insertItem:[NSMenuItem separatorItem] atIndex:i++];
     [optMenu insertItemWithTitle:NSLocalizedString(@"Quit Itsycal", @"") action:@selector(terminate:) keyEquivalent:@"q" atIndex:i++];
     NSPoint pt = NSOffsetRect(_btnOpt.frame, -5, -10).origin;
@@ -300,52 +295,30 @@
     [[NSUserDefaults standardUserDefaults] setBool:pin forKey:kPinItsycal];
 }
 
-- (void)showWeeks:(id)sender
-{
-    // The delay gives the menu item time to flicker before
-    // setting _moCal.showWeeks which runs an animation.
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-        _moCal.showWeeks = !_moCal.showWeeks;
-        [[NSUserDefaults standardUserDefaults] setBool:_moCal.showWeeks forKey:kShowWeeks];
-    });
-}
-
-- (void)highlightWeekend:(id)sender
-{
-    _moCal.highlightWeekend = !_moCal.highlightWeekend;
-    [[NSUserDefaults standardUserDefaults] setBool:_moCal.highlightWeekend forKey:kHighlightWeekend];
-}
-
-- (void)setFirstDayOfWeek:(id)sender
-{
-    NSMenuItem *item = (NSMenuItem *)sender;
-    _moCal.weekStartDOW = [item.menu indexOfItem:item];
-    [[NSUserDefaults standardUserDefaults] setInteger:_moCal.weekStartDOW forKey:kWeekStartDOW];
-}
-
 - (void)showPrefs:(id)sender
 {
     [[NSApplication sharedApplication] activateIgnoringOtherApps:YES];
     
     if (!_prefsWC) {
-        NSPanel *panel = [[NSPanel alloc] initWithContentRect:NSZeroRect styleMask:(NSWindowStyleMaskTitled | NSWindowStyleMaskClosable) backing:NSBackingStoreBuffered defer:NO];
-        PrefsViewController *prefsVC = [PrefsViewController new];
+        // VCs for each tab in prefs panel.
+        PrefsGeneralVC *prefsGeneralVC = [PrefsGeneralVC new];
+        PrefsAppearanceVC *prefsAppearanceVC = [PrefsAppearanceVC new];
+        PrefsAboutVC *prefsAboutVC = [PrefsAboutVC new];
+        prefsGeneralVC.title = NSLocalizedString(@"General", @"General prefs tab label");
+        prefsAppearanceVC.title = NSLocalizedString(@"Appearance", @"Appearance prefs tab label");
+        prefsAboutVC.title = NSLocalizedString(@"About", @"About prefs tab label");
+        // prefsVC is the container VC the tab VCs.
+        PrefsVC *prefsVC = [PrefsVC new];
         prefsVC.ec = _ec;
+        prefsVC.childViewControllers = @[prefsGeneralVC, prefsAppearanceVC, prefsAboutVC];
+        // Create prefs WC.
+        NSPanel *panel = [[NSPanel alloc] initWithContentRect:NSZeroRect styleMask:(NSWindowStyleMaskTitled | NSWindowStyleMaskClosable) backing:NSBackingStoreBuffered defer:NO];
         _prefsWC = [[NSWindowController alloc] initWithWindow:panel];
         _prefsWC.contentViewController = prefsVC;
-    }
-    // If the window is not visible, we must "close" it before showing it.
-    // This seems weird, but is the only way to ensure that -viewWillAppear
-    // and -viewDidAppear are called in the prefs VC. When the prefs window
-    // is hidden by being deactivated, it appears to have been closed to the
-    // user, but it didn't really "close" (it just hid). So we first properly
-    // "close" and then our view lifecycle methods are called in the VC.
-    // This feels like a hack.
-    if (!(_prefsWC.window.occlusionState & NSWindowOcclusionStateVisible)) {
-        [_prefsWC close];
+        _prefsWC.window.contentView.wantsLayer = YES;
+        [_prefsWC.window center];
     }
     [_prefsWC showWindow:self];
-    [_prefsWC.window center];
 }
 
 - (void)checkForUpdates:(id)sender
@@ -363,30 +336,20 @@
     _statusItem.button.action = @selector(statusItemClicked:);
     _statusItem.highlightMode = NO; // Deprecated in 10.10, but what is alternative?
 
-    NSString *systemclock = [[NSUserDefaults standardUserDefaults] stringForKey:kSystemClock];
+    // Use monospaced font in case user sets custom clock format
+    // so the status item doesn't move when the time changes.
+    // We modify the default font with a font descriptor instead
+    // of using +monospacedDigitSystemFontOfSize:weight: because
+    // we get slightly darker looking ':' characters this way.
+    NSFontDescriptor *fontDesc = [_statusItem.button.font fontDescriptor];
+    fontDesc = [fontDesc fontDescriptorByAddingAttributes:@{NSFontFeatureSettingsAttribute: @[@{NSFontFeatureTypeIdentifierKey: @(kNumberSpacingType), NSFontFeatureSelectorIdentifierKey: @(kMonospacedNumbersSelector)}]}];
+    _statusItem.button.font = [NSFont fontWithDescriptor:fontDesc size:0];
 
-    // Did the user choose to mimic the system clock?
-    if (systemclock != nil && ![systemclock isEqualToString:@""] && ![systemclock isEqualToString:@"false"]) {
-        // Use regular system font
-        
-        _statusItem.button.font = [NSFont systemFontOfSize:14.0];
-    }
-    else {
-        // Use monospaced font in case user sets custom clock format.
-        // We modify the default font with a font descriptor instead
-        // of using +monospacedDigitSystemFontOfSize:weight: because
-        // we get slightly darker looking ':' characters this way.
+    // Remember item position in menubar. (@pskowronek (Github))
+    [_statusItem setAutosaveName:@"ItsycalStatusItem"];
 
-        NSFontDescriptor *fontDesc = [_statusItem.button.font fontDescriptor];
-        fontDesc = [fontDesc fontDescriptorByAddingAttributes:@{NSFontFeatureSettingsAttribute: @[@{NSFontFeatureTypeIdentifierKey: @(kNumberSpacingType), NSFontFeatureSelectorIdentifierKey: @(kMonospacedNumbersSelector)}]}];
-        _statusItem.button.font = [NSFont fontWithDescriptor:fontDesc size:0];
-    }
-
-    // Remember item position in menubar for 10.12+. (@pskowronek (Github))
-    if (OSVersionIsAtLeast(10, 12, 0)) {
-        [_statusItem setAutosaveName:@"ItsycalStatusItem"];
-    }
     [self clockFormatDidChange];
+    [self updateMenubarIcon];
     [self updateStatusItemPositionInfo];
     [self.itsycalWindow positionRelativeToRect:_menuItemFrame screenFrame:_screenFrame];
     
@@ -403,10 +366,9 @@
         // Let 10.12+ remember item position and remove item when app is terminated.
         // If we remove item ourselves, autosavename is deleted from user defaults.
         // (@pskowronek (Github))
-        if (!OSVersionIsAtLeast(10, 12, 0)) {
-            [[NSStatusBar systemStatusBar] removeStatusItem:_statusItem];
-            _statusItem = nil;
-        }
+        // DO NOT do this:
+        //   [[NSStatusBar systemStatusBar] removeStatusItem:_statusItem];
+        //   _statusItem = nil;
     }
 }
 
@@ -422,18 +384,7 @@
         if ([[NSUserDefaults standardUserDefaults] boolForKey:kShowDayOfWeekInIcon]) {
             [template appendString:@"EEE"];
         }
-        
-        // Did the user choose to mimic the system clock?
-        NSString *systemclock = [[NSUserDefaults standardUserDefaults] stringForKey:kSystemClock];
-
-        if (systemclock != nil && ![systemclock isEqualToString:@""] && ![systemclock isEqualToString:@"false"]) {
-            [_iconDateFormatter setDateFormat:@"EEE d MMM"];
-        }
-        
-        // If the user did not choose to mimic the system clock, continue with regular style
-        else {
-            [_iconDateFormatter setDateFormat:[NSDateFormatter dateFormatFromTemplate:template options:0 locale:[NSLocale currentLocale]]];
-        }
+        [_iconDateFormatter setDateFormat:[NSDateFormatter dateFormatFromTemplate:template options:0 locale:[NSLocale currentLocale]]];
         iconText = [_iconDateFormatter stringFromDate:[NSDate new]];
     } else {
         iconText = [NSString stringWithFormat:@"%zd", _moCal.todayDate.day];
@@ -447,9 +398,14 @@
 
 - (void)updateMenubarIcon
 {
-    NSString *iconText = [self iconText];
-    _statusItem.button.image = [self iconImageForText:iconText];
-
+    if ([[NSUserDefaults standardUserDefaults] boolForKey:kHideIcon]) {
+        _statusItem.button.image = nil;
+        _statusItem.button.imagePosition = NSNoImage;
+    }
+    else {
+        _statusItem.button.image = [self iconImageForText:[self iconText]];
+        _statusItem.button.imagePosition = _clockFormat ? NSImageLeft : NSImageOnly;
+    }
     if (_clockFormat) {
         [_iconDateFormatter setDateFormat:_clockFormat];
         _statusItem.button.title = [_iconDateFormatter stringFromDate:[NSDate new]];
@@ -472,44 +428,37 @@
     }
 
     // Measure text width
-    NSFont *font = [NSFont monospacedDigitSystemFontOfSize:11.5 weight:NSFontWeightBold];
+    NSFont *font = [NSFont systemFontOfSize:11.5 weight:NSFontWeightBold];
     CGRect textRect = [[[NSAttributedString alloc] initWithString:text attributes:@{NSFontAttributeName: font}] boundingRectWithSize:CGSizeMake(999, 999) options:0 context:nil];
 
-    // Icon width is at least 19 pts with 3 pt outside margins, 4 pt inside margins.
-    CGFloat width = MAX(4 + ceilf(NSWidth(textRect)) + 4 + 7, 19);
+    // Icon width is at least 23 pts with 3 pt outside margins, 4 pt inside margins.
+    CGFloat width = MAX(3 + 4 + ceilf(NSWidth(textRect)) + 4 + 3, 23);
     CGFloat height = 16;
     iconImage = [NSImage imageWithSize:NSMakeSize(width, height) flipped:NO drawingHandler:^BOOL (NSRect rect) {
 
         // Get image's context.
         CGContextRef const ctx = [[NSGraphicsContext currentContext] graphicsPort];
-        
-        // Did the user choose to mimic the system clock?
 
-        NSString *systemclock = [[NSUserDefaults standardUserDefaults] stringForKey:kSystemClock];
-        
-        if (systemclock != nil && ![systemclock isEqualToString:@""] && ![systemclock isEqualToString:@"false"]) {
-            
+        if (useOutlineIcon) {
+
+            // Draw outlined icon image.
+
+            [[NSColor colorWithWhite:0 alpha:0.9] set];
+            [[NSBezierPath bezierPathWithRoundedRect:NSInsetRect(rect, 3.5, 0.5) xRadius:2 yRadius:2] stroke];
+
+            [[NSColor colorWithWhite:0 alpha:0.15] set];
+            NSBezierPath *p = [NSBezierPath bezierPathWithRoundedRect:NSInsetRect(rect, 4, 1) xRadius:1 yRadius:1];
+            [p setLineWidth:2];
+            [p stroke];
+
             // Turning off smoothing looks better (why??).
             CGContextSetShouldSmoothFonts(ctx, false);
-            
+
             // Draw text.
             NSMutableParagraphStyle *pstyle = [NSMutableParagraphStyle new];
             pstyle.alignment = NSTextAlignmentCenter;
-            [text drawInRect:NSOffsetRect(rect, 0, 2.0) withAttributes:@{NSFontAttributeName: [NSFont systemFontOfSize:14.0 weight:NSFontWeightMedium], NSParagraphStyleAttributeName: pstyle, NSForegroundColorAttributeName: [NSColor blackColor]}];
+            [text drawInRect:NSOffsetRect(rect, 0, -1) withAttributes:@{NSFontAttributeName: [NSFont systemFontOfSize:11.5 weight:NSFontWeightSemibold], NSParagraphStyleAttributeName: pstyle, NSForegroundColorAttributeName: [NSColor blackColor]}];
         }
-        
-        // If the user did not choose to mimic the system clock, continue with the regular options
-        
-        else if (useOutlineIcon) {
-
-                // Turning off smoothing looks better (why??).
-                CGContextSetShouldSmoothFonts(ctx, true);
-
-                // Draw text.
-                NSMutableParagraphStyle *pstyle = [NSMutableParagraphStyle new];
-                pstyle.alignment = NSTextAlignmentCenter;
-                [text drawInRect:NSOffsetRect(rect, 0, 1.5) withAttributes:@{NSFontAttributeName: [NSFont monospacedDigitSystemFontOfSize:13.5 weight:NSFontWeightMedium], NSParagraphStyleAttributeName: pstyle, NSForegroundColorAttributeName: [NSColor blackColor]}];
-            }
         else {
 
             // Draw solid background icon image.
@@ -542,7 +491,7 @@
             // Draw text.
             NSMutableParagraphStyle *pstyle = [NSMutableParagraphStyle new];
             pstyle.alignment = NSTextAlignmentCenter;
-            [text drawInRect:NSOffsetRect(deviceRect, 0, -1) withAttributes:@{NSFontAttributeName: [NSFont monospacedDigitSystemFontOfSize:fontSize weight:NSFontWeightBold], NSForegroundColorAttributeName: [NSColor blackColor], NSParagraphStyleAttributeName: pstyle}];
+            [text drawInRect:NSOffsetRect(deviceRect, 0, -1) withAttributes:@{NSFontAttributeName: [NSFont systemFontOfSize:fontSize weight:NSFontWeightBold], NSForegroundColorAttributeName: [NSColor blackColor], NSParagraphStyleAttributeName: pstyle}];
 
             // Switch back to the image's context.
             [NSGraphicsContext restoreGraphicsState];
@@ -837,20 +786,27 @@
 {
     NSString *format = [[NSUserDefaults standardUserDefaults] stringForKey:kClockFormat];
 
+    // -observeValueForKeyPath:ofObject:change:context: sends
+    // redundant change notifications ever since binding prefs
+    // textfield to kClockFormat. If clock format hasn't changed,
+    // ignore this redundant change notification.
+    if ((format == nil && _clockFormat == nil) ||
+        [format isEqualToString:_clockFormat]) {
+        return;
+    }
+
     // Did the user set a custom clock format string?
     if (format != nil && ![format isEqualToString:@""]) {
         NSLog(@"Use custom clock format: [%@]", format);
         _clockUsesSeconds = [self formatContainsSecondsSpecifier:format];
-        _statusItem.button.imagePosition = NSImageLeft;
         _clockFormat = format;
     }
     else {
         NSLog(@"Use normal icon");
         [_clockTimer invalidate];
         _clockTimer = nil;
-        _statusItem.button.title = @"";
-        _statusItem.button.imagePosition = NSImageOnly;
         _clockFormat = nil;
+        _statusItem.button.title = @"";
     }
     [self updateMenubarIcon];
 }
@@ -918,7 +874,7 @@
     [[[NSWorkspace sharedWorkspace] notificationCenter] addObserver:self selector:@selector(updateMenubarIcon) name:NSWorkspaceDidWakeNotification object:nil];
 
     // Observe NSUserDefaults for preference changes
-    for (NSString *keyPath in @[kShowEventDays, kUseOutlineIcon, kShowMonthInIcon, kShowDayOfWeekInIcon, kClockFormat, kSystemClock]) {
+    for (NSString *keyPath in @[kShowEventDays, kUseOutlineIcon, kShowMonthInIcon, kShowDayOfWeekInIcon, kHideIcon, kClockFormat]) {
         [[NSUserDefaults standardUserDefaults] addObserver:self forKeyPath:keyPath options:NSKeyValueObservingOptionNew context:NULL];
     }
 }
@@ -933,7 +889,8 @@
     }
     else if ([keyPath isEqualToString:kUseOutlineIcon] ||
              [keyPath isEqualToString:kShowMonthInIcon] ||
-             [keyPath isEqualToString:kShowDayOfWeekInIcon]) {
+             [keyPath isEqualToString:kShowDayOfWeekInIcon] ||
+             [keyPath isEqualToString:kHideIcon]) {
         [self updateMenubarIcon];
     }
     else if ([keyPath isEqualToString:kClockFormat]) {
