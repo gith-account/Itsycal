@@ -3,10 +3,10 @@ status bar calendar.
 
 Solomon23's fork alters the look of the calendar.
 
-This fork slightly modifies the new look.
+This fork slightly modifies that alternate look:
 
-It also adds a hidden option to mimic the system clock's appearance instead of showing a date icon, a feature that becomes obsolete with sfsam's improved version 0.11.1. 
-
-![Screen](./Screenshot.png)
+- title with greater padding, slightly altered alignment of top right buttons
+- indentation of date columns in agenda view
+- 3D-effect removed from pin icon, active pin icon is highlighted in blue 
 
 For more info, see: [http://www.mowglii.com/itsycal](http://www.mowglii.com/itsycal)
